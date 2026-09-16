@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: fraud-analytics-module
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fraud_analytics
+    username: postgres
+    password: 7754
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # schema is owned by Flyway, not Hibernate auto-DDL
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${FAM_REDIS_HOST:10.1.11.100}
+      port: ${FAM_REDIS_PORT:6379}
+      password: ${FAM_REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  kafka:
+    bootstrap-servers: ${FAM_KAFKA_BOOTSTRAP:10.1.11.100:9092}
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+
+  mail:
+    host: ${FAM_SMTP_HOST:smtp.freesmtpservers.com}
+    port: ${FAM_SMTP_PORT:25}
+    username: ${FAM_SMTP_USER:}
+    password: ${FAM_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak realm issuer for the VismAI platform, e.g.:
+          # https://<keycloak-host>/realms/vismai
+          issuer-uri: ${FAM_KEYCLOAK_ISSUER_URI:https://keycloak.example.gov.in/realms/vismai}
+
+server:
+  port: ${FAM_SERVER_PORT:9999}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# ---------------------------------------------------------------------------
+# Fraud Analytics Module (FAM) specific configuration — SP-SRS-FRAUD-001
+# ---------------------------------------------------------------------------
+fam:
+  kafka:
+    topic:
+      auth-events: ${FAM_KAFKA_TOPIC:auth.events}
+    consumer-group: fraud-analytics-module
+
+  alerting:
+    email:
+      enabled: ${FAM_EMAIL_ALERTS_ENABLED:false}
+      recipients: ${FAM_EMAIL_ALERTS_RECIPIENTS:}
+    sms:
+      enabled: ${FAM_SMS_ALERTS_ENABLED:false}
+
+logging:
+  level:
+    root: INFO
+    gov.nic.esdt.vismai.fraudanalytics: INFO
